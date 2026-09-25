@@ -33,3 +33,5 @@ jobs:
         run: |
           gh release view v0.26.0 >/dev/null 2>&1 || gh release create v0.26.0 --title "LR Vetor v0.26.0" --notes "Instalador oficial do LR Vetor para Windows." --latest
           gh release upload v0.26.0 LR-Vetor-Windows-Setup.exe --clobber
+
+# acionamento de publicacao
