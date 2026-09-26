@@ -1,0 +1,35 @@
+name: Publicar LR Vetor v0.29.0
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/publish-v0.29.0.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: windows-latest
+    steps:
+      - name: Baixar artefato do instalador
+        shell: pwsh
+        run: |
+          $url = "https://sdmntprbrazilsouth.oaiusercontent.com/files/00000000-1eb8-820e-a15c-4c7df1ab3bb0/raw?se=2026-09-26T00%3A18%3A12Z&sp=r&sv=2026-02-06&sr=b&scid=40faaa7c-fe05-5927-8058-f02171465000&skoid=4a431cd2-eafd-49c7-90be-bbb4d45e696d&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-25T19%3A43%3A19Z&ske=2026-09-26T19%3A43%3A19Z&sks=b&skv=2026-02-06&sig=r0FjbV9OFaHVwCGbJDWBrzxIbqSZZCnu9oMbk0ajyck%3D"
+          Invoke-WebRequest -Uri $url -OutFile "LR-Vetor-Windows.zip"
+          Expand-Archive -Path "LR-Vetor-Windows.zip" -DestinationPath "artifact"
+          $exe = Get-ChildItem "artifact" -Recurse -Filter "LR-Vetor-Windows-Setup.exe" | Select-Object -First 1
+          if (-not $exe) { throw "Instalador nao encontrado no artefato" }
+          Copy-Item $exe.FullName "LR-Vetor-Windows-Setup.exe"
+          $hash = (Get-FileHash "LR-Vetor-Windows-Setup.exe" -Algorithm SHA256).Hash.ToLower()
+          if ($hash -ne "df2a2077d5d6289e6b7f0b23bad0b80e0660bbc7ecdb435fd45fcead854868e1") {
+            throw "SHA-256 inesperado: $hash"
+          }
+
+      - name: Publicar release publico
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view v0.29.0 --repo flavianoresendemachado-lgtm/LR-Vetor-Downloads >/dev/null 2>&1 || gh release create v0.29.0 --repo flavianoresendemachado-lgtm/LR-Vetor-Downloads --title "LR Vetor v0.29.0" --notes "Instalador oficial do LR Vetor v0.29.0 para Windows. Inclui o primeiro Estudio 3D do instrumento." --latest
+          gh release upload v0.29.0 LR-Vetor-Windows-Setup.exe --clobber --repo flavianoresendemachado-lgtm/LR-Vetor-Downloads
