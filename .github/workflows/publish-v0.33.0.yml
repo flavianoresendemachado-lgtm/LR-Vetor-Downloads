@@ -1,0 +1,24 @@
+name: Publicar LR Vetor v0.33.0
+on:
+  push:
+    paths:
+      - '.github/workflows/publish-v0.33.0.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar artefato validado
+        run: |
+          curl -L --fail --retry 3 'https://sdmntprbrazilsouth.oaiusercontent.com/files/00000000-e20c-820e-b0ab-7f80d732105c/raw?se=2026-09-26T03%3A49%3A08Z&sp=r&sv=2026-02-06&sr=b&scid=2f082814-bf4b-50ba-9f47-46930a21a97b&skoid=4a431cd2-eafd-49c7-90be-bbb4d45e696d&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-25T19%3A35%3A48Z&ske=2026-09-26T19%3A35%3A48Z&sks=b&skv=2026-02-06&sig=VSL568VlPH4pnByCo%2BI7cvT/ovzQapLvz0t85MJltd0%3D' -o lr-vetor.zip
+          unzip -o lr-vetor.zip -d package
+          cp "$(find package -type f -name 'LR-Vetor-Windows-Setup.exe' | head -n1)" LR-Vetor-Windows-Setup.exe
+          echo "18b94464c5fa33df850723e621297a8bbe03c88510343d9b84850c212b7f72cf  LR-Vetor-Windows-Setup.exe" | sha256sum -c -
+      - name: Publicar release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view v0.33.0 --repo flavianoresendemachado-lgtm/LR-Vetor-Downloads >/dev/null 2>&1 || gh release create v0.33.0 --repo flavianoresendemachado-lgtm/LR-Vetor-Downloads --title "LR Vetor v0.33.0" --notes "Segovia oficial, headstock 14°, régua e grade milimétrica, fotos salvas/removíveis, novos cavaletes e rastilho corrigido." --latest
+          gh release upload v0.33.0 LR-Vetor-Windows-Setup.exe --repo flavianoresendemachado-lgtm/LR-Vetor-Downloads --clobber
